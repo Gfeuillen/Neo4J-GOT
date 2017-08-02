@@ -1,0 +1,26 @@
+# MAKE INDEX ON WORDS
+
+CREATE INDEX ON :WORD(name)
+
+# LOAD DATA
+
+LOAD CSV WITH HEADERS FROM "file:///var/lib/neo4j/import/ngrams.csv" AS line
+WITH 
+	COALESCE(line.gram_0, "") as ngram_0,
+	COALESCE(line.gram_1, "") as ngram_1
+MERGE (gram0:WORD {name:ngram_0})
+ON CREATE SET gram0.count=0 
+ON MATCH SET gram0.count=gram0.count+1
+MERGE (gram1:WORD {name:ngram_1})
+ON CREATE SET gram1.count=0 
+ON MATCH SET gram1.count=gram1.count+1
+MERGE (gram0)-[next:NEXT_WORD]->(gram1) 
+ON CREATE SET next.count=0 
+ON MATCH SET next.count=next.count+1
+
+# DO SOME STUFF
+
+MATCH (w1:WORD)-[next:NEXT_WORD]->(w2:WORD {name:"north"})
+RETURN w1,next,w2
+ORDER BY next.count DESC
+LIMIT 10

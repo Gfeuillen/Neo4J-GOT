@@ -1,0 +1,25 @@
+# LOAD DATA
+
+LOAD CSV WITH HEADERS FROM "file:///var/lib/neo4j/import/character_names.csv" AS line
+WITH 
+	COALESCE(line.name0, "undefined") as name0,
+    COALESCE(line.name1, "undefined") as name1,
+    COALESCE(line.name2, "undefined") as name2
+MERGE (cn0:CHARACTER_NAME {name:name0})
+MERGE (cn1:CHARACTER_NAME {name:name1})
+MERGE (cn2:CHARACTER_NAME {name:name2})
+MERGE (cn0)-[:NEXT_NAME]->(cn1)-[:NEXT_NAME]->(cn2)
+-----------------------------------------------------------------------------------------------------------------------------
+
+# DELETE DUMMY NODE
+
+MATCH ()-[r:NEXT_NAME]-(c:CHARACTER_NAME {name:"undefined"})
+DELETE r,c
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+# CHECK ALL DATA
+
+MATCH (n:CHARACTER_NAME)
+OPTIONAL MATCH p=(n)-[:NEXT_NAME*]-(e)
+RETURN n,p
